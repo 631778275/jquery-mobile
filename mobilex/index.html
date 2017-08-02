@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+	<title>JQuery Mobile</title>
+	<link rel="stylesheet" href="penguin/css/jquery.mobile-1.4.5.min.css?var=2">
+	<link rel="stylesheet" href="penguin/css/reset.css?var=2">
+	<style>
+		.ui-mobile, .ui-mobile body {
+			position: relative;
+			height: 100%;
+		}
+
+/*		@media screen and (min-width: 640px) {
+			.ui-mobile, .ui-header-fixed, .ui-footer-fixed {
+				width: 640px!important;
+				margin: 0 auto;
+			}
+		}*/
+
+		.ui-mobile [data-role=page], .ui-mobile [data-role=dialog], .ui-page {
+			-webkit-transform: translate3d(0, 0, 0);
+			transform: translate3d(0, 0, 0);
+
+			-webkit-backface-visibility: hidden;
+			backface-visibility: hidden;
+		}
+
+		/*添加无边框类*/
+		.ui-noborder {
+			border: none!important;
+		}
+
+		/*滑块(min-width, 实际需求)*/
+		.ui-slider-track .ui-btn.ui-slider-handle {
+			width: auto;
+			min-width: 2em;
+			line-height: 28px;
+			padding: 0 .2em;
+		}
+
+		/*还原data-role=slider被自定义滑块覆盖的样式*/
+		.ui-slider-switch .ui-btn.ui-slider-handle {
+			width: 28px;
+			padding: 0;
+		}
+
+		/*滑块上方放大数值(min-width, 实际需求)*/
+		.ui-slider-popup {
+			width: auto;
+			min-width: 2em;
+			height: 1.4em;
+			line-height: 1.4em;
+			padding: 0 .2em;
+		}
+
+		/*******************其他样式******************/
+
+	</style>
+	<script src=penguin/js/jquery-2.1.4.min.js?var=2></script>
+	<script src=penguin/js/jquery.mobile-1.4.5.min.js?var=2></script>
+	<script>
+		// 显示加载动画
+		function showLoader (text) {
+			$.mobile.loading('show', {
+				text: text || '加载中...', // 显示的文字
+				textVisible: true, // 是否显示文字
+				theme: 'b', // 主题(a-e)
+				textonly: false, // 是否只显示文字
+				html: '', // 要显示的html内容, 如图片
+			})
+		}
+
+		// 隐藏加载动画
+		function hideLoader () {
+			$.mobile.loading('hide');
+		}
+
+		$(document).one('pagecreate', function () {
+			// 不支持3D转换, 设置回退指定过渡, 默认回退为渐变过渡
+			$.mobile.transitionFallbacks.slideout = 'none';
+
+			// 全局页面默认过渡
+			$.mobile.defaultPageTransition = 'none';
+
+			// 全局对话框(data-rel=dialog)默认过渡, data-dialog=true的对话框采用页面过渡
+			$.mobile.defaultDialogTransition = 'none';
+
+			// 禁止按钮延迟响应
+			$.mobile.buttonMarkup.hoverDelay = "false";
+
+			// 方向感应
+			$(window).on('orientationchange', function(event) { 
+				if (event.orientation != 'portrait') {
+					alert('为了更好的体验，请将手机/平板竖过来！');
+				}
+			}).trigger('orientationchange');
+
+			// 保持每个页面都存在header和footer
+			// $( "[data-role='header'], [data-role='footer']" ).toolbar();
+
+			// 指定标签禁止样式被插件渲染, 同data-role=none
+			// $.mobile.page.prototype.options.keepNative = 'select, input.foo, textarea.bar';
+/*			
+			// 预取同域名下的其他页面, 同data-prefetch=true, 重复预取同一页面, 增加脚本运行, 避免使用
+			$(':mobile-pagecontainer').pagecontainer('load', 'icon.html', {
+				showLoadMsg: false
+			});
+
+			// 限制窗口宽度发生过渡(默认false, 不限宽度)
+			$.mobile.maxTransitionWidth = 640;
+
+			// 缓存文档, data-dom-cache=true缓存指定页面
+			$.mobile.page.prototype.options.domCache = true;
+
+			// 缓存被访问过的指定页面
+			$('#home_page').page({
+				domCache: true
+			});
+*/
+			// 面板优化 (添加这个在微信上出bug)
+			// $('body>[data-role=panel').panel();
+
+			// $('body>[data-role=panel] [data-role=listview]').listview();
+		})
+
+		.one('pageshow', function () {
+			$('body>[data-role=header]').toolbar();
+			$('body>[data-role=header] [data-role=navbar]').navbar();
+		})
+
+		.on('pageinit', function () {
+			// 自动分割列表项配置自动分割项标题
+			$(auto_dividers).listview({
+				autodividersSelector: function (li) {
+					return li.attr('title');
+				}
+			}).listview('refresh');
+
+			// 动态折叠操作
+			// 添加
+			var add_collapsible_index = 1;
+			$(add_collapsible).click(function () {
+				$(dynamic_collapsible).append('<div data-role=collapsible><h3>collapsible' + add_collapsible_index + '</h3><p>' + add_collapsible_index +'</p></div>').collapsibleset('refresh');
+				add_collapsible_index++;
+			})
+
+			// 关闭
+			$(close_collapsible).click(function () {
+				$(dynamic_collapsible).children(':last').collapsible('collapse');
+			})
+
+			// 展开
+			$(open_collapsible).click(function () {
+				$(dynamic_collapsible).children(':last').collapsible('expand');
+			})
+
+			// 动态模块控制
+			// 选择
+			$('[name=radios3]').on('change', function () {
+				$(dynamic_controlgroup).controlgroup('option', 'type', ($(radio31).is(':checked') ? 'horizontal' : 'vertical'));
+			})
+
+			// 搜索城市
+			$(search_listview).on('filterablebeforefilter', function (e, that) {
+				var $ul = $(this),
+					$input = $(that.input),
+					$val = $input.val(),
+					html = '';
+
+				if ($val && $val.length > 2) {
+					// 这个跨域请求城市的地址似乎不能用了
+					$.getJSON('http://gd.geobytes.com/AutoCompleteCity?callback=?', {q: $input.val()}, function (data) {
+						$.each(data, function (i, val) {
+							if (this[0]) {
+								html += '<li><a href="">' + this + '</a></li>';
+							};
+						});
+
+						$ul.html('');
+						$ul.html(html);
+						$ul.listview('refresh');
+						$ul.trigger('updatelayout');
+					})
+				} else{
+					$ul.html('');
+				}
+			})
+
+			// 复选框选中状态
+			$(checkbox1).on('change', function () {
+				showLoader(this.checked.toString())
+			})
+
+			$(checkbox2).on('change', hideLoader);
+
+			// 导航记录
+			$(window).on('navigate', function (event, data) {
+				console.log(data.state.url);
+			});
+
+			$(document).on('pagehide', function () {
+				$('[data-role=page]').animationComplete(function () {
+					console.log('animationComplete, 动画结束时触发')
+				})
+			})
+
+			// 刷新布局以调整相关组件适应布局
+			// $(document).trigger("updatelayout");
+
+			// 改变容器高度时触发(如动态添加header和footer)
+			// $.mobile.resetActivePageHeight();
+		})
+	</script>
+</head>
+<body>
+	<section id="home_page" data-role=page data-dom-cache=true>
+		<header data-role=header data-position=fixed data-tap-toggle=false>
+			<h2>header</h2>
+			<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>
+		</header>
+
+		<ul data-role=listview data-divider-theme=b data-inset=true>
+			<li data-role=list-divider>page(页面)</li>
+			<li><a href="#page_transition" data-ajax=false data-transition=pop>transition过渡</a></li>
+			<li><a href="#page_tab">tab切换</a></li>
+			<li><a href="#page_panel">panel面板</a></li>
+			<li><a href="#page_popup">popup弹出框</a></li>
+			<li><a href="#page_dialog">dialog对话框</a></li>
+			<li><a href="icon.html">icon图标</a></li>
+			<li><a href="#page_btn">btn按钮</a></li>
+			<li><a href="#page_grid">grid分栏布局</a></li>
+			<li><a href="#page_controlgroup">controlgroup模块控制</a></li>
+			<li><a href="#page_listview">listview列表</a></li>
+			<li><a href="#page_collapsible">collapsible折叠</a></li>
+			<li><a href="#page_range">range范围选择</a></li>
+			<li><a href="#page_select">select下拉选择</a></li>
+			<ul data-role=collapsible data-iconpos=right data-collapsed-icon=carat-r data-expanded-icon=carat-d data-corners=false>
+				<h2>input输入框</h2>
+				<ul data-role=listview>
+					<li><a href="#page_radio">radio单选框</a></li>
+					<li><a href="#page_checkbox">checkbox复选框</a></li>
+					<li><a href="#page_search">search搜索框</a></li>
+					<li><a href="#page_text">text文本框</a></li>
+					<li><a href="#page_date">date日期</a></li>
+				</ul>
+			</ul>
+			<li><a href="#page_refresh">refresh组件刷新</a></li>
+
+			<li>data-role=page, 标记页面容器</li>
+			<li>data-role=header, data-role=footer, ui-content</li>
+			<li>data-position=fixed, 定位(header, footer)</li>
+			<li>data-fullscreen=true, 全面定位</li>
+			<li>data-dom-cache=true, 缓存指定页面</li>
+			<li>其他, transitionHandlers, allowSamePageTransition, getMaxScrollForTransition</li>
+			<li>data-overlay-theme=b, 蒙版主题</li>
+			<li>data-url='url', 重定向页面链接记录</li>
+			<li>data-enhanced=true, 增强渲染效果</li>
+			<li>data-role=none, 禁止样式被插件渲染</li>
+			<li>data-tap-toggle=false, 禁止如header的隐藏</li>
+		</ul>
+
+		<ul data-role=listview data-divider-theme=b data-inset=true>
+			<li data-role=list-divider>style样式</li>
+			<li>ui-dialog, 无背景</li>
+			<li>ui-noborder, 无边框</li>
+			<li>data-corners=false, 无圆角</li>
+			<li>ui-corner-all, 添加圆角</li>
+			<li>data-shadow=false, 无阴影</li>
+			<li>ui-shadow, 添加阴影</li>
+			<li>ui-shadow-inset, 添加向内阴影</li>
+			<li>ui-mini, 缩小(data-mini=true)</li>
+			<li>ui-btn-active, 激活状态</li>
+
+			<li>ui-bar, 内容标题(ui-bar-[a-z], 主题)</li>
+			<li>ui-body, 内容主体(ui-bar-[a-z], 主题)</li>
+
+			<li>ui-field-contain, 内容成行元素</li>
+		</ul>
+
+		<ul data-role=listview data-divider-theme=b data-inset=true>
+			<li data-role=list-divider>link(链接)</li>
+			<li><a href="icon.html" data-rel=back>data-rel=back, 应指定正确返回地址或锚点(href), 避免6s等不支持</a></li>
+			<li>data-add-back-btn=true data-back-btn-text="返回", 自动生成返回按钮, 不建议使用</li>
+			<li><a href="icon.html">data-prefetch=true, 预取页面, 避免使用</a></li>
+			<li><a href="icon.html" data-ajax=false>data-ajax=false, 非ajax跳转外部链接(同rel=external)</a></li>
+		</ul>
+	</section>
+
+	<section data-role=page id="page_transition">
+		<header data-role=header>
+			<h2>transition过渡</h2>
+			<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>
+		</header>
+		<article class="ui-content">
+			<ul data-role=listview data-divider-theme=b>
+				<li data-role=list-divider>data-transition=fade, 渐变, 默认页面过渡</li>
+				<li><a href="icon.html" data-transition=pop>pop(弹窗, 默认对话框过渡)</a></li>
+				<li><a href="icon.html" data-transition=slide>slide(滑动)</a></li>
+				<li><a href="icon.html" data-transition=slidefade>slidefade(滑动渐变)</a></li>
+				<li><a href="icon.html" data-transition=slideup>slideup(上滑)</a></li>
+				<li><a href="icon.html" data-transition=slidedown>slidedown(下滑)</a></li>
+				<li><a href="icon.html" data-transition=turn>turn(翻页)</a></li>
+				<li><a href="icon.html" data-transition=flip>flip(翻转)</a></li>
+				<li><a href="icon.html" data-transition=flow>flow(浮动)</a></li>
+				<li><a href="icon.html" data-transition=none>none(无)</a></li>
+				<li><a href="icon.html" data-transition=slide data-direction=reverse >data-direction=reverse, 反向运作</a></li>
+			</ul>
+		</article>
+	</section>
+
+	<section data-role=page id="page_tab">
+		<header data-role=header>
+			<h2>tab切换</h2>
+			<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>
+		</header>
+		<article class="ui-content">
+			<p>ui-btn-active, 初始激活状态(同时添加ui-state-persist, 在页面切换时保持激活状态)</p>
+			<p>设置唯一的data-id=main, 避免页面切换出现闪烁</p>
+		</article>
+		<footer data-role=footer data-position=fixed data-id=main>
+			<div data-role=navbar>
+				<ul>
+					<li><a href="#page_tab" class="ui-btn-active ui-state-persist">tab1</a></li>
+					<li><a href="icon.html">tab2</a></li>
+				</ul>
+			</div>
+		</footer>
+	</section>
+
+	<section data-role=page id="page_panel">
+		<header data-role=header>
+			<h2>panel面板</h2>
+			<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>
+		</header>
+
+		<article class="ui-content">
+			<ul data-role=listview data-divider-theme=b>
+				<li data-role=list-divider>data-role=panel, 面板</li>
+				<li>data-display=reveal, 面板动画(reveal[默认], push, overlay)</li>
+				<li>data-animate=false, 禁用面板动画</li>
+				<li>data-position=left, 面板定位(left[默认], right)</li>
+				<li>data-position-fixed=true, 面板绝对定位</li>
+				<li>data-swipe-close=false, 禁用滑动来关闭面板</li>
+				<li>data-dismissible=false, 禁止点击页面来关闭面板</li>
+				<li>data-rel=close, 关闭面板(href='#')</li>
+				<li><a href="#panel_inside" class="ui-btn ui-btn-icon-left ui-icon-gear">打开面板</a></li>
+			</ul>
+		</article>
+
+		<aside data-role=panel id="panel_inside" data-display=push data-theme=b>
+			<a href="#" class="ui-btn ui-btn-icon-right ui-icon-delete" data-rel=close>关闭面板</a>
+		</aside>
+	</section>
+
+	<section data-role=page id="page_popup">
+		<header data-role=header>
+			<h2>popup弹出框</h2>
+			<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>
+		</header>
+
+		<article class="ui-content">
+			<ul data-role=listview data-divider-theme=b>
+				<li data-role=list-divider>data-role=popup, 弹出框</li>
+				<li>data-rel=popup, 打开弹出框</li>
+				<li>data-position-to=window, 弹出框定位(origin[默认], window, '#elem')</li>
+				<li>data-dismissible=false, 点击蒙版不会关闭弹出框</li>
+				<li>弹出框和打开弹出框的链接要在同一页面(data-role=page)内</li>
+
+				<li><a href="#popup_info" data-rel=popup data-transition=pop data-position-to="#origin">弹出文字提示</a></li>
+				<li><a href="#popup_list" data-rel=popup data-transition=slideup>弹出列表</a></li>
+				<li><a href="#popup_collapsible" data-rel=popup data-transition=slidedown>弹出列表组</a></li>
+				<li><a href="#popup_dialog" data-rel=popup data-position-to=window data-transition=pop>弹出对话框</a></li>
+				<li><a href="#popup_img" data-rel=popup data-transition=flip>弹出相框</a></li>
+			</ul>
+		</article>
+
+		<dialog id="popup_info" class="ui-content" data-role=popup>
+			<div class="ui-popup-arrow-container ui-popup-arrow-l">
+				<div class="ui-popup-arrow ui-body-inherit ui-overlay-shadow"></div>
+			</div>
+			<p>ui-popup-arrow-b, 添加弹出箭头</p>
+		</dialog>
+
+		<dialog id="popup_dialog" data-role=popup data-overlay-theme=b>
+			<header data-role=header>
+				<h2>对话框</h2>
+				<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>	
+			</header>
+			<article class="ui-content">
+				<p style="min-width: 200px">dialog content</p>
+			</article>
+		</dialog>
+
+		<dialog id="popup_list" data-role=popup>
+			<ul data-role=listview data-divider-theme=b>
+				<li data-role=list-divider>弹出列表</li>
+				<li><a href="#">弹出列表</a></li>
+				<li><a href="#">弹出列表</a></li>
+			</ul>
+		</dialog>
+
+		<dialog id="popup_collapsible" data-role=popup>
+			<div data-role=collapsibleset data-collapsed-icon=arrow-r data-expanded-icon=arrow-d data-theme=b style='margin: -1px;'>
+				<div data-role=collapsible>
+					<h2>列表折叠的图标</h2>
+					<ul data-role=listview>
+						<li><a href="#">data-collapsed-icon=arrow-r</a></li>
+					</ul>
+				</div>
+				<div data-role=collapsible>
+					<h2>列表展开的图标</h2>
+					<ul data-role=listview>
+						<li><a href="#">data-expanded-icon=arrow-d</a></li>
+					</ul>
+				</div>
+			</div>
+		</dialog>
+
+		<dialog id="popup_img" data-role=popup data-overlay-theme=b>
+			<img src="penguin/img/bg.jpg" class="ui-li-icon" alt="">
+		</dialog>
+	</section>
+
+	<section data-role=page id="page_dialog">
+		<header data-role=header>
+			<h2>dialog对话框</h2>
+			<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>
+		</header>
+
+		<article class="ui-content">
+			<ul data-role=listview data-divider-theme=b>
+				<li data-role=list-divider>在链接中添加data-rel=dialog(官文中提到将在1.5中取消), 或在页面(data-role=page)中添加data-dialog=true</li>
+				<li>data-role=header, 在对话框中会自动生成关闭按钮</li>
+				<li>data-close-btn=right, 自动生成按钮的位置(默认左边)</li>
+				<li>data-close-btn=none, 禁用自动生成的按钮(不要指定按钮位置)</li>
+				<li>data-overlay-theme=b, 对话框蒙版的主题</li>
+				<li><a href="#dialog_aside" data-transition=pop class="ui-btn ui-btn-icon-left ui-icon-gear">打开对话框</a></li>
+			</ul>
+		</article>
+	</section>
+
+	<dialog id="dialog_aside" data-role=page data-dialog=true>
+		<header data-role=header>
+			<h2 class="ui-title">dialog</h2>
+		</header>
+		<article class="ui-content">
+			<p>dialog content</p>
+		</article>
+	</dialog>
+
+	<section data-role=page id="page_btn">
+		<header data-role=header>
+			<h2>btn按钮</h2>
+			<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>
+		</header>
+		<article class="ui-content">
+			<a href="" class="ui-btn">ui-btn或data-role=button, 按钮</a>
+			<a href="" class="ui-btn ui-btn-b">ui-btn-b, 按钮黑色主题</a>
+			<p>ui-btn-inline, 作行块元素</p>
+			<button data-inline=true>按钮-button</button>
+			<input type="button" data-inline=true value="按钮-input">
+			<a href="" data-role=button data-inline=true class="ui-corner-all ui-shadow">按钮-a</a>
+			<button class="ui-state-disabled">ui-state-disabled, 相当于disabled=""</button>
+		</article>
+	</section>
+
+	<section data-role=page id="page_grid">
+		<header data-role=header>
+			<h2>grid分栏布局</h2>
+			<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>
+		</header>
+		<article class="ui-content">
+			<p>ui-grid-solo, 分栏布局(1栏)</p>
+			<p>ui-grid-[a-d], 分栏布局(2-5栏)</p>
+			<p>ui-block-[a-e], 子栏(ui-block-a, 每一栏的第一个, 其他可选)</p>
+			<p>ui-responsive, 响应式分栏</p>
+
+			<div class="ui-grid-solo">
+				<button>demo</button>
+			</div>
+
+			<div class="ui-grid-d">
+				<div class="ui-block-b"><button>demo</button></div>
+				<div class="ui-block-b"><button>demo</button></div>
+				<div class="ui-block-b"><button>demo</button></div>
+				<div class="ui-block-b"><button>demo</button></div>
+				<div class="ui-block-b"><button>demo</button></div>
+			</div>
+		</article>
+	</section>
+
+	<section data-role=page id="page_controlgroup">
+		<header data-role=header>
+			<h2>controlgroup模块控制</h2>
+			<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>
+		</header>
+		<article class="ui-content">
+			<div data-role=controlgroup>
+				<a href="#" class="ui-btn ui-btn-icon-left ui-icon-tag">data-role=controlgroup, 模块控制</a>
+				<a href="#" class="ui-btn ui-btn-icon-left ui-icon-tag">默认模块垂直布局</a>
+				<a href="#" class="ui-btn ui-btn-icon-left ui-icon-tag">需要块元素</a>
+			</div>
+
+			<h3>data-type=horizontal, 模块水平布局(默认vertical)</h3>
+			<p><small>动态模块控制</small></p>
+			<div id="dynamic_controlgroup" data-role=controlgroup data-type=horizontal>
+				<label for="radio31">horizontal</label>
+				<input type="radio" id="radio31" name="radios3" value="" checked="checked">
+				<label for="radio32">vertical</label>
+				<input type="radio" id="radio32" name="radios3" value="">
+			</div>
+		</article>
+	</section>
+
+	<section data-role=page id="page_listview">
+		<header data-role=header>
+			<h2>listview列表</h2>
+			<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>
+		</header>
+		<article class="ui-content">
+			<h3>data-role=listview, 列表</h3>
+			<ul data-role=listview data-inset=true>
+				<li>data-inset=true, 列表带圆角和边距</li>
+			</ul>
+
+			<h3>data-filter=true, 添加过滤搜索</h3>
+			<ul data-role=listview data-inset=true data-filter=true>
+				<li>data-filter-reveal=true, 搜索为空, 隐藏列表</li>
+				<li>data-filter-placeholder=placeholder, 提示输入内容</li>
+				<li>data-filter-theme=b, 输入框主题</li>
+			</ul>
+
+			<h3>拆分列表项目</h3>
+			<ul data-role=listview data-inset=true data-split-icon=gear data-split-theme=b>
+				<li>
+					<a href="">
+						<img src="penguin/img/bg.jpg" alt="">
+						<p>data-split-icon=gear, 拆分项目图标</p>
+						<p>data-split-theme=b, 拆分项目主题</p>
+					</a>
+					<a href="#popup_split" data-rel=popup data-position-to=window>拆分列表项目</a>
+				</li>
+			</ul>
+
+			<h3>ui-li-icon, 图片转图标</h3>
+			<ul data-role=listview data-inset=true data-split-icon=gear data-splite-theme=b>
+				<li><img src="penguin/img/bg.jpg" alt="" class="ui-li-icon"></li>
+			</ul>
+
+			<h3>ui-li-count, 计数指示器</h3>
+			<ul data-role=listview data-inset=true data-count-theme=b>
+				<li>
+					<p>data-count-theme=[a-c], 计数指示器主题</p>
+					<span class="ui-li-count">2</span>
+				</li>
+			</ul>
+
+			<h3>ui-li-aside, 格式结构化</h3>
+			<ul data-role=listview data-inset=true>
+				<li>
+					<p>demo</p>
+					<p class="ui-li-aside"><strong>进行中...</strong></p>
+				</li>
+			</ul>
+
+			<h3>data-role=list-divider, 分割列表项目</h3>
+			<ul data-role=listview data-inset=true data-divider-theme=b>
+				<li data-role=list-divider>data-divider-theme=[a-c], 分割项目主题</li>
+				<li>demo</li>
+			</ul>
+
+			<h3>data-autodividers=true, 自动分割列表项目</h3>
+			<ul id="auto_dividers" data-role=listview data-inset=true data-autodividers=true>
+				<li title="js中配置自动生成分割项目的内容">demo</li>
+			</ul>
+
+			<dialog id="popup_split" data-role=popup data-overlay-theme=b>
+				<header data-role=header>
+					<h2>对话框</h2>
+					<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>	
+				</header>
+				<article class="ui-content">
+					<p style="min-width: 200px">dialog content</p>
+				</article>
+			</dialog>
+		</article>
+	</section>
+
+	<section data-role=page id="page_collapsible">
+		<header data-role=header>
+			<h2>collapsible折叠</h2>
+			<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>
+		</header>
+		<article class="ui-content">
+			<div data-role=collapsible data-collapsed=false>
+				<h3>data-role=collapsible, 折叠</h3>
+				<p>data-collapsed=false, 初始展开</p>
+			</div>
+
+			<div data-role=collapsibleset>
+				<div data-role=collapsible>
+					<h3>data-role=collapsibleset, 折叠组</h3>
+					<ul data-role=listview>
+						<li>嵌入列表</li>
+					</ul>
+				</div>
+
+				<div data-role=collapsible data-collapsed-icon=arrow-r data-expanded-icon=arrow-d>
+					<h3>折叠状态图标</h3>
+					<ul data-role=listview>
+						<li><a href="#">data-collapsed-icon=arrow-r, 折叠图标</a></li>
+						<li><a href="#">data-expanded-icon=arrow-d, 展开图标</a></li>
+					</ul>
+				</div>
+			</div>
+
+			<div id="dynamic_collapsible" data-role=collapsibleset>
+				<div data-role=collapsible>
+					<h3>动态折叠操作</h3>
+					<button id="add_collapsible" data-inline=true>添加</button>
+					<button id="close_collapsible" data-inline=true>折叠</button>
+					<button id="open_collapsible" data-inline=true>展开</button>
+				</div>
+			</div>
+		</article>
+	</section>
+
+	<section data-role=page id="page_range">
+		<header data-role=header>
+			<h2>range范围选择</h2>
+			<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>
+		</header>
+		<article class="ui-content">
+			<p>data-role=rangeslider, 范围选择组</p>
+			<p>data-highlight=true, 默认高亮选中部分</p>
+			<p>data-show-value=true, 滑块中显示数值(data-mini=true下无效)</p>
+			<p>data-popup-enabled=true, 滑动时, 滑块上方显示放大数值</p>
+
+			<input type="range" id="range2" min=1 max=99 step=.1 value="6.1" data-show-value=true data-popup-enabled=true>
+
+			<div data-role=rangeslider data-theme=b>
+				<input type="range" id="range1" min=1 max=99 step=.1 value="2.1" data-show-value=true data-popup-enabled=true>
+				<input type="range" id="range2" min=1 max=99 step=.1 value="6.1" data-show-value=true data-popup-enabled=true>
+			</div>
+		</article>
+	</section>
+
+	<section data-role=page id="page_select">
+		<header data-role=header>
+			<h2>select下拉选择</h2>
+			<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>
+		</header>
+		<article class="ui-content">
+			<select name="" id="">
+				<option value="">option1</option>
+				<option value="">option2</option>
+			</select>
+
+			<select name="" id="" data-native-menu=false data-iconpos=left multiple=multiple>
+				<option value="a" data-placeholder=true>data-placeholder=true, 下拉选择列表的标题</option>
+				<option value="b" selected="selected">data-native-menu=false, 下拉改成弹出方式</option>
+				<option value="c">multiple=multiple, 多选</option>
+				<optgroup label="optgroup, 分组">
+					<option value="d" disabled="disabled">disabled</option>
+				</optgroup>
+			</select>
+
+			<div class="ui-field-contain">
+				<label for="switch2" style="width: auto;">data-role=slider, 开关:</label>
+				<select name="switch2" id="switch2" data-role=slider>
+					<option value="off">Off</option>
+					<option value="on" selected="selected">On</option>
+				</select>
+			</div>
+		</article>
+	</section>
+
+	<section data-role=page id="page_radio">
+		<header data-role=header>
+			<h2>radio单选框</h2>
+			<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>
+		</header>
+		<article class="ui-content">
+			<label for="radio11">radio1</label>
+			<input type="radio" id="radio11" name="radios1" checked="checked">
+			<label for="radio12">radio2</label>
+			<input type="radio" id="radio12" name="radios1">
+
+			<div class="ui-btn-inline">
+				<label for="radio21">radio1</label>
+				<input type="radio" id="radio21" name="radios2" checked="checked">
+			</div>
+			<div class="ui-btn-inline">
+				<label for="radio22">radio2</label>
+				<input type="radio" id="radio22" name="radios2">
+			</div>
+			<div>
+				<a href="#page_controlgroup" class="ui-btn ui-btn-inline">模块组的单选框</a>
+			</div>
+		</article>
+	</section>
+
+	<section data-role=page id="page_checkbox">
+		<header data-role=header>
+			<h2>checkbox复选框</h2>
+			<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>
+		</header>
+		<article class="ui-content">
+			<label for="checkbox1">checkbox1</label>
+			<input type="checkbox" id="checkbox1" value="checkbox1">
+			<label for="checkbox2">checkbox2</label>
+			<input type="checkbox" id="checkbox2" value="checkbox2">
+
+			<div class="ui-btn-inline">
+				<label for="checkbox3">checkbox3</label>
+				<input type="checkbox" id="checkbox3" value="checkbox3">
+			</div>
+			<div class="ui-btn-inline">
+				<label for="checkbox4">checkbox4</label>
+				<input type="checkbox" id="checkbox4" value="checkbox4">
+			</div>
+
+			<div class="ui-field-contain">
+				<label for="checkbox2" style="width: auto;">data-role=flipswitch, 开关</label>
+				<input type="checkbox" data-role=flipswitch name="checkboxs" id="checkbox2" data-on-text="on" data-off-text="off">
+			</div>
+		</article>
+	</section>
+
+	<section data-role="page" id="page_search">
+		<header data-role=header>
+			<h2>search搜索框</h2>
+			<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>
+		</header>
+		<article class="ui-content">
+			<p>data-filter=true, 搜索列表</p>
+			<p>data-input="#search_autocomplite", 列表匹配搜索框</p>
+			<p>data-filter-reveal=true, 搜索为空, 隐藏列表</p>
+			<p>data-filtertext='keywords', 添加匹配关键词</p>
+			<input type="search" id="search_autocomplite" placeholder="城市搜索">
+			<ul id="search_listview" data-role=listview data-inset=true data-filter=true data-input="#search_autocomplite"></ul>
+		</article>
+	</section>
+
+	<section data-role="page" id="page_text">
+		<header data-role=header>
+			<h2>text文本框</h2>
+			<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>
+		</header>
+		<article class="ui-content">
+			<input type="text">
+			<label>data-clear-btn=true, 添加删除按钮</label>
+			<input type="text" data-clear-btn=true>
+		</article>
+	</section>
+
+	<section data-role="page" id="page_date">
+		<header data-role=header>
+			<h2>date日期</h2>
+			<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>
+		</header>
+		<article class="ui-content">
+			<label><a href="http://api.jqueryui.com/datepicker">datepicker</a>, 日期插件</label>
+			<input type="date">
+		</article>
+	</section>
+
+	<section data-role="page" id="page_refresh">
+		<header data-role=header>
+			<h2>refresh组件刷新</h2>
+			<a href="#home_page" class="ui-btn ui-noborder ui-corner-all ui-dialog ui-alt-icon ui-nodisc-icon ui-icon-carat-l ui-btn-icon-notext" data-rel=back>返回</a>
+		</header>
+		<article class="ui-content">
+			<h3>1 Combobox or select dropdowns</h3>
+			<p>x1.selectedIndex = 1</p>
+			<p>x1.selectmenu('refresh')</p>
+			<p>x11.selectmenu('refresh', true)</p>
+
+			<h3>2 Listviews</h3>
+			<p>x2.listview('refresh')</p>
+
+			<h3>3 Slider control</h3>
+			<p>x3.val(1).slider('refresh')</p>
+
+			<h3>4 Toggle switch</h3>
+			<p>x4.selectedIndex = 1</p>
+			<p>x4.slider('refresh')</p>
+
+			<h3>5 Checkboxes or Radio buttons</h3>
+			<p>x5.prop('checked', true).checkboxradio('refresh')</p>
+
+			<h3>6 Buttons</h3>
+			<p>x6.button('refresh')</p>
+			<p>x66.buttonMarkup('refresh')</p>
+
+			<h3>7 Column-Toggle Table</h3>
+			<p>x7.table-columntoggle('refresh')</p>
+
+			<h3>8 Reflow Table</h3>
+			<p>x8.table('refresh')</p>
+		</article>
+	</section>
+</body>
+</html>

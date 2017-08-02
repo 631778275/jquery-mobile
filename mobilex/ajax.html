@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script src="http://libs.useso.com/js/jquery/2.1.1-rc2/jquery.min.js"></script>
+</head>
+
+<body>
+	<form action="http://gd.geobytes.com/AutoCompleteCity">
+		<input type="search" placeholder="search">
+		<input type="submit" value="ok">
+	</form>
+	<script>
+		$(function () {
+			// $.get('a.php', {
+			// 	name: 'xxx', id: 'xxx'
+			// }, function (data) {
+			// 	var table = $('<table>');
+
+			// 	$.each(data, function (i, val) {
+			// 		table.append('<tr><td><div style="background: url(' + val.headimgurl + ') no-repeat center center; background-size: contain;"></div></td><td><p>' + val.nickname + '</p></td></tr>');
+			// 	})
+			// 	$('body').empty().append(table);
+			// })
+			// .done(function () {
+			// 	console.log('成功');
+			// })
+			// .fail(function () {
+			// 	console.log('失败');
+			// })
+			// .always(function () {
+			// 	console.log('完成(无论成功或失败)');
+			// })
+
+			$('form').submit(function (event) {
+				event.preventDefault();
+
+				// $.ajax({
+				// 	url: $(this).attr('action'),
+				// 	dataType: 'jsonp',
+				// 	data: {
+				// 		q:  $(this).find('input[type=search]').val()
+				// 	},
+				// 	success: function (data) {
+				// 		$.each(data, function (i, val) {
+				// 			if (val && val != '%s') {
+				// 				console.log(val);
+				// 			}
+				// 		});
+				// 	}
+				// })
+
+				$.jsonp({
+					url: $(this).attr('action'),
+					data: {
+						q: $(this).find('input[type=search]').val()
+					},
+					callbackParameter: 'callback',
+					success: function (data) {
+						console.log(data);
+					}
+				})
+			})
+		})
+	</script>
+</body>
+</html>

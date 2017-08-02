@@ -1,0 +1,64 @@
+﻿dl, dd, h1, h2, h3, h4, h5, h6, p, form, ol, ul, figure {
+	margin: 0;
+}
+ol, ul, dialog {
+	padding: 0;
+}
+section, article, header, footer, nav, figure, figcaption, canvas, dialog, img {
+	display: block;
+}
+body {
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+}
+li {
+	list-style: none;
+}
+a {
+	text-decoration: none;
+	cursor: pointer;
+	color: #000;
+}
+mark {
+	background: none;
+	color: #000;
+}
+a, img, label, input, button, textarea, summary {
+	-webkit-tap-highlight-color: transparent;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+img {
+	width: 100%;
+	-webkit-touch-callout: none;
+}
+textarea {
+	resize: none;
+}
+summary {
+	outline: none;
+}
+
+/*清浮动*/
+.clearfix:after {
+	clear: both;
+	display: block;
+	height: 0;
+	content: '\200B';
+}
+
+/*禁止选中*/
+.selectfix {
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+}
+
+/*超出隐藏*/
+.overfix {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
